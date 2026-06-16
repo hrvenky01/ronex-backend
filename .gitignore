@@ -34,3 +34,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+*.class
+Ronex_vb/bin/
