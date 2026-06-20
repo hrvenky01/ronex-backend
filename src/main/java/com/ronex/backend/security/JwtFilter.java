@@ -21,9 +21,12 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
+    // ✅ SKIP JWT FILTER FOR PUBLIC + ACTUATOR
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return request.getRequestURI().startsWith("/api/auth/");
+        String path = request.getRequestURI();
+        return path.startsWith("/api/auth/")
+            || path.startsWith("/actuator");
     }
 
     @Override
