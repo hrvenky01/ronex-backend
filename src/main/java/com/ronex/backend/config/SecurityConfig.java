@@ -4,7 +4,6 @@ import com.ronex.backend.security.JwtFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -35,8 +34,12 @@ public class SecurityConfig {
             )
 
             .authorizeHttpRequests(auth -> auth
-                // ✅ PUBLIC
-                .requestMatchers("/api/auth/**").permitAll()
+                // ✅ PUBLIC (NO JWT)
+                .requestMatchers(
+                    "/api/auth/**",
+                    "/actuator/health",
+                    "/actuator/info"
+                ).permitAll()
 
                 // 🔐 ADMIN
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
