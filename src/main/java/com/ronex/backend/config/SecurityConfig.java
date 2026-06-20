@@ -34,9 +34,11 @@ public class SecurityConfig {
             )
 
             .authorizeHttpRequests(auth -> auth
-                // ✅ PUBLIC ENDPOINTS
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/actuator/health").permitAll()
+                // ✅ PUBLIC
+                .requestMatchers(
+                    "/api/auth/**",
+                    "/actuator/**"     // ⭐ IMPORTANT
+                ).permitAll()
 
                 // 🔐 ADMIN
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -47,6 +49,7 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
 
+            // ⚠️ JwtFilter still applies, but actuator is already permitted
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
