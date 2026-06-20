@@ -34,12 +34,9 @@ public class SecurityConfig {
             )
 
             .authorizeHttpRequests(auth -> auth
-                // ✅ PUBLIC (NO JWT)
-                .requestMatchers(
-                    "/api/auth/**",
-                    "/actuator/health",
-                    "/actuator/info"
-                ).permitAll()
+                // ✅ PUBLIC ENDPOINTS
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/actuator/health").permitAll()
 
                 // 🔐 ADMIN
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
