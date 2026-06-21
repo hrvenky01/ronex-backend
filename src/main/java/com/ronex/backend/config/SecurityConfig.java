@@ -22,18 +22,18 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            // ❌ Disable defaults
+            // ❌ Disable default auth mechanisms
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.disable())
             .httpBasic(basic -> basic.disable())
             .formLogin(form -> form.disable())
 
-            // ✅ JWT based (NO session)
+            // ✅ Stateless JWT (mobile apps)
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // ✅ 401 response
+            // ✅ Return 401 instead of redirect
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint(
                     (req, res, e) ->
@@ -51,7 +51,7 @@ public class SecurityConfig {
                     "/auth/register"
                 ).permitAll()
 
-                // 🔓 If API prefix exists
+                // 🔓 API AUTH PREFIX (if used)
                 .requestMatchers("/api/auth/**").permitAll()
 
                 // 🔓 WEBSOCKET
@@ -65,10 +65,10 @@ public class SecurityConfig {
                 // 🔓 ACTUATOR
                 .requestMatchers("/actuator/**").permitAll()
 
-                // 🔐 ADMIN
+                // 🔐 ADMIN APIs
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                // 🔐 USER
+                // 🔐 USER APIs
                 .requestMatchers("/api/user/**").hasRole("USER")
 
                 // 🔒 EVERYTHING ELSE
