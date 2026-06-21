@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -21,11 +22,18 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
+            // ❌ Disable defaults
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.disable())
             .httpBasic(basic -> basic.disable())
             .formLogin(form -> form.disable())
 
+            // ✅ JWT based (NO session)
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+
+            // ✅ 401 response
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint(
                     (req, res, e) ->
@@ -34,11 +42,28 @@ public class SecurityConfig {
             )
 
             .authorizeHttpRequests(auth -> auth
-                // ✅ PUBLIC
+
+                // 🔓 PUBLIC AUTH (OTP FIX 🔥)
                 .requestMatchers(
-                    "/api/auth/**",
-                    "/actuator/**"     // ⭐ IMPORTANT
+                    "/auth/send-otp",
+                    "/auth/verify-otp",
+                    "/auth/login",
+                    "/auth/register"
                 ).permitAll()
+
+                // 🔓 If API prefix exists
+                .requestMatchers("/api/auth/**").permitAll()
+
+                // 🔓 WEBSOCKET
+                .requestMatchers(
+                    "/ws/**",
+                    "/sockjs/**",
+                    "/topic/**",
+                    "/app/**"
+                ).permitAll()
+
+                // 🔓 ACTUATOR
+                .requestMatchers("/actuator/**").permitAll()
 
                 // 🔐 ADMIN
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -46,10 +71,11 @@ public class SecurityConfig {
                 // 🔐 USER
                 .requestMatchers("/api/user/**").hasRole("USER")
 
+                // 🔒 EVERYTHING ELSE
                 .anyRequest().authenticated()
             )
 
-            // ⚠️ JwtFilter still applies, but actuator is already permitted
+            // ✅ JWT FILTER
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
