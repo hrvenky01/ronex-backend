@@ -1,16 +1,9 @@
 package com.ronex.backend.service.impl;
 
-import com.ronex.backend.model.Otp;
-import com.ronex.backend.model.User;
-import com.ronex.backend.model.ReferralCode;
-import com.ronex.backend.model.ReferralHistory;
-import com.ronex.backend.repository.OtpRepository;
-import com.ronex.backend.repository.UserRepository;
-import com.ronex.backend.repository.ReferralCodeRepository;
-import com.ronex.backend.repository.ReferralHistoryRepository;
+import com.ronex.backend.model.*;
+import com.ronex.backend.repository.*;
 import com.ronex.backend.service.AuthService;
 import com.ronex.backend.util.ReferralUtil;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +19,6 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private UserRepository userRepository;
 
-    // 🔥 NEW
     @Autowired
     private ReferralCodeRepository referralCodeRepository;
 
@@ -34,7 +26,7 @@ public class AuthServiceImpl implements AuthService {
     private ReferralHistoryRepository referralHistoryRepository;
 
     // =========================
-    // 🔥 SEND OTP
+    // 🔥 SEND OTP (optional)
     // =========================
     @Override
     public String sendOtp(String phone) {
@@ -43,51 +35,57 @@ public class AuthServiceImpl implements AuthService {
 
         otpRepository.deleteByPhone(phone);
 
-        Otp otpEntity = new Otp();
-        otpEntity.setPhone(phone);
-        otpEntity.setOtp(otp);
-        otpEntity.setExpiresAt(LocalDateTime.now().plusMinutes(5));
+        Otp o = new Otp();
+        o.setPhone(phone);
+        o.setOtp(otp);
+        o.setExpiresAt(LocalDateTime.now().plusMinutes(5));
 
-        otpRepository.save(otpEntity);
+        otpRepository.save(o);
 
         System.out.println("🔥 OTP for " + phone + " = " + otp);
-
         return "OTP sent successfully";
     }
 
     // =========================
-    // 🔥 VERIFY OTP
+    // 🔥 VERIFY OTP (optional)
     // =========================
     @Override
     public String verifyOtp(String phone, String otp) {
 
-        Otp otpEntity = otpRepository.findByPhone(phone)
+        Otp o = otpRepository.findByPhone(phone)
                 .orElseThrow(() -> new RuntimeException("OTP not found"));
 
-        if (otpEntity.getExpiresAt().isBefore(LocalDateTime.now())) {
+        if (o.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("OTP expired");
         }
 
-        if (!otpEntity.getOtp().equals(otp)) {
+        if (!o.getOtp().equals(otp)) {
             throw new RuntimeException("Invalid OTP");
         }
 
-        // =========================
-        // 👤 USER CREATE / FIND
-        // =========================
+        ensureUserExists(phone);
+        otpRepository.deleteByPhone(phone);
+
+        return "OTP verified successfully";
+    }
+
+    // =========================
+    // 🔥 FIREBASE FLOW CORE
+    // =========================
+    @Override
+    public void ensureUserExists(String phone) {
+
         User user = userRepository.findByPhone(phone)
                 .orElseGet(() -> {
                     User u = new User();
                     u.setPhone(phone);
-                    u.setRole("USER");        // clean role
+                    u.setRole("USER");
                     u.setBalance(0L);
                     u.setWalletBalance(0L);
                     return userRepository.save(u);
                 });
 
-        // =========================
-        // 🔥 REFERRAL CODE AUTO CREATE
-        // =========================
+        // 🔥 auto referral code create
         referralCodeRepository.findByUserId(user.getId())
                 .orElseGet(() -> {
                     ReferralCode rc = new ReferralCode();
@@ -95,14 +93,10 @@ public class AuthServiceImpl implements AuthService {
                     rc.setCode(ReferralUtil.generate());
                     return referralCodeRepository.save(rc);
                 });
-
-        otpRepository.deleteByPhone(phone);
-
-        return "OTP verified successfully";
     }
 
     // =========================
-    // 🔥 APPLY REFERRAL CODE
+    // 🔥 APPLY REFERRAL
     // =========================
     @Override
     public void applyReferral(Long newUserId, String referralCode) {
@@ -111,30 +105,22 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new RuntimeException("Invalid referral code"));
 
         User referrer = userRepository.findById(code.getUserId())
-                .orElseThrow();
+                .orElseThrow(() -> new RuntimeException("Referrer not found"));
 
         User newUser = userRepository.findById(newUserId)
-                .orElseThrow();
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // ❌ self referral block
         if (referrer.getId().equals(newUser.getId())) {
             throw new RuntimeException("Self referral not allowed");
         }
 
         newUser.setReferredBy(referrer.getId());
 
-        long reward;
+        long reward = "AGENT".equals(referrer.getRole()) ? 300 : 200;
+        referrer.setWalletBalance(referrer.getWalletBalance() + reward);
 
-        // 🔥 AGENT vs USER reward
-        if ("AGENT".equals(referrer.getRole())) {
-            reward = 300;
-            referrer.setWalletBalance(referrer.getWalletBalance() + reward);
-            saveHistory(referrer.getId(), newUserId, reward, "AGENT_COMMISSION");
-        } else {
-            reward = 200;
-            referrer.setWalletBalance(referrer.getWalletBalance() + reward);
-            saveHistory(referrer.getId(), newUserId, reward, "USER_REFERRAL");
-        }
+        saveHistory(referrer.getId(), newUserId, reward,
+                "AGENT".equals(referrer.getRole()) ? "AGENT_COMMISSION" : "USER_REFERRAL");
 
         userRepository.save(referrer);
         userRepository.save(newUser);

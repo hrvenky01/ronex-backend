@@ -21,14 +21,14 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
-    // ✅ SKIP JWT FILTER FOR PUBLIC ENDPOINTS
+    // ✅ PUBLIC ENDPOINTS KI JWT FILTER SKIP
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
 
-        return path.startsWith("/auth/")        // 🔥 OTP + LOGIN + REGISTER
-            || path.startsWith("/api/auth/")   // optional api prefix
-            || path.startsWith("/actuator");   // health checks
+        return path.startsWith("/auth/")
+            || path.startsWith("/api/auth/")
+            || path.startsWith("/actuator");
     }
 
     @Override
@@ -47,20 +47,24 @@ public class JwtFilter extends OncePerRequestFilter {
             if (jwtUtil.validateToken(token)) {
 
                 String username = jwtUtil.extractUsername(token);
+
+                // 🔥 IMPORTANT: role already = ROLE_ADMIN / ROLE_USER
                 String role = jwtUtil.extractRole(token);
 
-                UsernamePasswordAuthenticationToken auth =
+                UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 username,
                                 null,
-                                List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                                List.of(new SimpleGrantedAuthority(role))
                         );
 
-                auth.setDetails(
+                authentication.setDetails(
                         new WebAuthenticationDetailsSource().buildDetails(request)
                 );
 
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                SecurityContextHolder
+                        .getContext()
+                        .setAuthentication(authentication);
             }
         }
 

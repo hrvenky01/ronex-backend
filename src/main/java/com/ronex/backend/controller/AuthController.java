@@ -1,7 +1,7 @@
 package com.ronex.backend.controller;
 
-import com.ronex.backend.dto.SendOtpRequest;
-import com.ronex.backend.dto.VerifyOtpRequest;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseToken;
 import com.ronex.backend.security.JwtUtil;
 import com.ronex.backend.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,35 +15,46 @@ import java.util.Map;
 public class AuthController {
 
     @Autowired
-    private AuthService authService;
-
-    @Autowired
     private JwtUtil jwtUtil;
 
-    // ======================
-    // 📱 USER OTP LOGIN
-    // ======================
-    @PostMapping("/send-otp")
-    public String sendOtp(@RequestBody SendOtpRequest req) {
-        return authService.sendOtp(req.getPhone());
-    }
+    @Autowired
+    private AuthService authService;
 
-    @PostMapping("/verify-otp")
-    public Map<String, String> verifyOtp(@RequestBody VerifyOtpRequest req) {
+    // ==============================
+    // 🔥 FIREBASE OTP LOGIN (FINAL)
+    // ==============================
+    @PostMapping("/firebase-login")
+    public Map<String, String> firebaseLogin(
+            @RequestBody Map<String, String> body
+    ) throws Exception {
 
-        // OTP verify
-        authService.verifyOtp(req.getPhone(), req.getOtp());
+        String firebaseIdToken = body.get("firebaseToken");
 
-        // check role from DB (IMPORTANT for agent system ready)
-        String role = authService.getUserRole(req.getPhone()); 
-        // returns USER / AGENT
+        FirebaseToken decodedToken =
+                FirebaseAuth.getInstance().verifyIdToken(firebaseIdToken);
 
-        String token = jwtUtil.generateToken(req.getPhone(), role);
+        // ✅ CORRECT WAY (Java SDK)
+        String phone = (String) decodedToken
+                .getClaims()
+                .get("phone_number"); // +919703352669
+
+        if (phone == null) {
+            throw new RuntimeException("Phone number not found in Firebase token");
+        }
+
+        // normalize
+        phone = phone.replace("+91", "");
+
+        // create user if needed
+        authService.ensureUserExists(phone);
+
+        String role = authService.getUserRole(phone);
+        String jwt  = jwtUtil.generateToken(phone, role);
 
         return Map.of(
-                "token", token,
+                "token", jwt,
                 "role", role,
-                "phone", req.getPhone()
+                "phone", phone
         );
     }
 
@@ -51,22 +62,22 @@ public class AuthController {
     // 🔐 ADMIN LOGIN
     // ======================
     @PostMapping("/admin/login")
-    public Map<String, String> adminLogin(@RequestBody Map<String, String> req) {
+    public Map<String, String> adminLogin(
+            @RequestBody Map<String, String> req
+    ) {
 
-        String username = req.get("username");
-        String password = req.get("password");
+        if ("admin".equals(req.get("username"))
+                && "admin123".equals(req.get("password"))) {
 
-        if ("admin".equals(username) && "admin123".equals(password)) {
-
-            String token = jwtUtil.generateToken(username, "ADMIN");
+            String token = jwtUtil.generateToken("admin", "ADMIN");
 
             return Map.of(
                     "token", token,
                     "role", "ADMIN",
-                    "username", username
+                    "username", "admin"
             );
         }
 
-        return Map.of("error", "Invalid Admin Credentials");
+        throw new RuntimeException("Invalid Admin Credentials");
     }
 }

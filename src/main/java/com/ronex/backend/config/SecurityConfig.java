@@ -22,37 +22,33 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            // ❌ Disable default auth mechanisms
+            // ❌ Disable defaults
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.disable())
             .httpBasic(basic -> basic.disable())
             .formLogin(form -> form.disable())
 
-            // ✅ Stateless JWT (mobile apps)
+            // ✅ JWT = STATELESS
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // ✅ Return 401 instead of redirect
-            .exceptionHandling(ex -> ex
-                .authenticationEntryPoint(
-                    (req, res, e) ->
-                        res.sendError(HttpServletResponse.SC_UNAUTHORIZED)
-                )
-            )
+            // ✅ 401 instead of redirect
+            .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                (req, res, e) ->
+                    res.sendError(HttpServletResponse.SC_UNAUTHORIZED)
+            ))
 
             .authorizeHttpRequests(auth -> auth
 
-                // 🔓 PUBLIC AUTH (OTP FIX 🔥)
+                // 🔓 PUBLIC AUTH (Firebase OTP flow)
                 .requestMatchers(
                     "/auth/send-otp",
                     "/auth/verify-otp",
                     "/auth/login",
-                    "/auth/register"
+                    "/auth/register",
+                    "/api/auth/**"
                 ).permitAll()
-
-                // 🔓 API AUTH PREFIX (if used)
-                .requestMatchers("/api/auth/**").permitAll()
 
                 // 🔓 WEBSOCKET
                 .requestMatchers(
@@ -65,13 +61,13 @@ public class SecurityConfig {
                 // 🔓 ACTUATOR
                 .requestMatchers("/actuator/**").permitAll()
 
-                // 🔐 ADMIN APIs
+                // 🔐 ADMIN
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                // 🔐 USER APIs
+                // 🔐 USER
                 .requestMatchers("/api/user/**").hasRole("USER")
 
-                // 🔒 EVERYTHING ELSE
+                // 🔒 ALL OTHERS
                 .anyRequest().authenticated()
             )
 

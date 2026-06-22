@@ -9,11 +9,11 @@ import com.razorpay.RazorpayClient;
 @Configuration
 public class RazorpayConfig {
 
-	@Value("${razorpay.key_id:dummy_key}")
-	private String keyId;
+    @Value("${razorpay.key_id}")
+    private String keyId;
 
-	@Value("${razorpay.key_secret:dummy_secret}")
-	private String keySecret;
+    @Value("${razorpay.key_secret}")
+    private String keySecret;
 
     @Bean
     public RazorpayClient razorpayClient() throws Exception {
