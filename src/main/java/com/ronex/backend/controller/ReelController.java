@@ -10,6 +10,7 @@ import com.ronex.backend.repository.ReelRepository;
 import lombok.RequiredArgsConstructor;
 
 import java.io.File;
+import java.security.Principal;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.*;
@@ -24,24 +25,29 @@ public class ReelController {
     private final ReelLikeRepository reelLikeRepository;
     private final ReelCommentRepository commentRepository;
 
-    // 📤 UPLOAD VIDEO
+    // 📤 UPLOAD VIDEO (JWT based user)
     @PostMapping("/upload-video")
     public Reel uploadVideo(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("userName") String userName
+            Principal principal   // 🔐 comes from JWT
     ) throws Exception {
 
         String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
 
         File uploadDir = new File("uploads/");
-        if (!uploadDir.exists()) uploadDir.mkdirs();
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
+        }
 
         File dest = new File(uploadDir, fileName);
         file.transferTo(dest);
 
         Reel reel = new Reel();
-        reel.setVideoUrl("http://localhost:8080/uploads/" + fileName);
-        reel.setUserName(userName);
+        reel.setVideoUrl("https://ronex-backend.onrender.com/uploads/" + fileName);
+
+        // 🔥 mobile number / username from JWT
+        reel.setUserName(principal.getName());
+
         reel.setLikes(0L);
 
         return reelRepository.save(reel);
@@ -55,11 +61,16 @@ public class ReelController {
 
     // ❤️ LIKE
     @PostMapping("/like/{reelId}")
-    public String likeReel(@PathVariable Long reelId, @RequestParam Long userId) {
+    public String likeReel(
+            @PathVariable Long reelId,
+            Principal principal
+    ) {
 
         ReelLike like = new ReelLike();
         like.setReelId(reelId);
-        like.setUserId(userId);
+
+        // 🔐 userId optional – JWT user enough
+        like.setUserId(principal.getName().hashCode() * 1L);
 
         reelLikeRepository.save(like);
 
@@ -68,7 +79,11 @@ public class ReelController {
 
     // 💬 COMMENT
     @PostMapping("/comment")
-    public String addComment(@RequestBody ReelComment comment) {
+    public String addComment(
+            @RequestBody ReelComment comment,
+            Principal principal
+    ) {
+        comment.setUserName(principal.getName());
         commentRepository.save(comment);
         return "Comment added";
     }
