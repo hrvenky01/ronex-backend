@@ -33,7 +33,7 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // ✅ 401 instead of redirect
+            // ✅ Always return 401 (no redirects)
             .exceptionHandling(ex -> ex.authenticationEntryPoint(
                 (req, res, e) ->
                     res.sendError(HttpServletResponse.SC_UNAUTHORIZED)
@@ -41,7 +41,7 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-                // 🔓 PUBLIC AUTH
+                // 🔓 AUTH APIs
                 .requestMatchers(
                     "/auth/send-otp",
                     "/auth/verify-otp",
@@ -50,7 +50,7 @@ public class SecurityConfig {
                     "/api/auth/**"
                 ).permitAll()
 
-                // 🔓 🔥 REELS + VIDEO FILES (IMPORTANT)
+                // 🔓 🔥 REELS + UPLOADED FILES (IMPORTANT)
                 .requestMatchers(
                     "/api/reels/**",
                     "/uploads/**"
@@ -73,7 +73,7 @@ public class SecurityConfig {
                 // 🔐 USER
                 .requestMatchers("/api/user/**").hasRole("USER")
 
-                // 🔒 OTHERS
+                // 🔒 EVERYTHING ELSE
                 .anyRequest().authenticated()
             )
 
