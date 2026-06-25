@@ -22,26 +22,22 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            // ❌ Disable defaults
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.disable())
             .httpBasic(basic -> basic.disable())
             .formLogin(form -> form.disable())
 
-            // ✅ JWT = STATELESS
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // ✅ Always return 401 (no redirects)
             .exceptionHandling(ex -> ex.authenticationEntryPoint(
-                (req, res, e) ->
-                    res.sendError(HttpServletResponse.SC_UNAUTHORIZED)
+                (req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)
             ))
 
             .authorizeHttpRequests(auth -> auth
 
-                // 🔓 AUTH APIs
+                // 🔓 AUTH
                 .requestMatchers(
                     "/auth/send-otp",
                     "/auth/verify-otp",
@@ -50,13 +46,13 @@ public class SecurityConfig {
                     "/api/auth/**"
                 ).permitAll()
 
-                // 🔓 🔥 REELS + UPLOADED FILES (IMPORTANT)
+                // 🔓 🔥 REELS UPLOAD (IMPORTANT)
                 .requestMatchers(
                     "/api/reels/**",
                     "/uploads/**"
                 ).permitAll()
 
-                // 🔓 WEBSOCKET
+                // 🔓 WS
                 .requestMatchers(
                     "/ws/**",
                     "/sockjs/**",
@@ -67,17 +63,13 @@ public class SecurityConfig {
                 // 🔓 ACTUATOR
                 .requestMatchers("/actuator/**").permitAll()
 
-                // 🔐 ADMIN
+                // 🔐 ROLES
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
-                // 🔐 USER
                 .requestMatchers("/api/user/**").hasRole("USER")
 
-                // 🔒 EVERYTHING ELSE
                 .anyRequest().authenticated()
             )
 
-            // ✅ JWT FILTER
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
