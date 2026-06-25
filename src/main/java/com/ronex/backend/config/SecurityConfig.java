@@ -41,13 +41,19 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-                // 🔓 PUBLIC AUTH (Firebase OTP flow)
+                // 🔓 PUBLIC AUTH
                 .requestMatchers(
                     "/auth/send-otp",
                     "/auth/verify-otp",
                     "/auth/login",
                     "/auth/register",
                     "/api/auth/**"
+                ).permitAll()
+
+                // 🔓 🔥 REELS + VIDEO FILES (IMPORTANT)
+                .requestMatchers(
+                    "/api/reels/**",
+                    "/uploads/**"
                 ).permitAll()
 
                 // 🔓 WEBSOCKET
@@ -67,7 +73,7 @@ public class SecurityConfig {
                 // 🔐 USER
                 .requestMatchers("/api/user/**").hasRole("USER")
 
-                // 🔒 ALL OTHERS
+                // 🔒 OTHERS
                 .anyRequest().authenticated()
             )
 
