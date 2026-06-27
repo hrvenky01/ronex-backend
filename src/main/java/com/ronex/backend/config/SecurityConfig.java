@@ -4,6 +4,7 @@ import com.ronex.backend.security.JwtFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -23,7 +24,7 @@ public class SecurityConfig {
 
         http
             .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.disable())
+            .cors(Customizer.withDefaults())
             .httpBasic(basic -> basic.disable())
             .formLogin(form -> form.disable())
 
@@ -39,26 +40,18 @@ public class SecurityConfig {
 
                 // 🔓 AUTH
                 .requestMatchers(
-                    "/auth/send-otp",
-                    "/auth/verify-otp",
-                    "/auth/login",
-                    "/auth/register",
+                    "/auth/**",
                     "/api/auth/**"
                 ).permitAll()
 
-                // 🔓 🔥 REELS UPLOAD (IMPORTANT)
-                .requestMatchers(
-                    "/api/reels/**",
-                    "/uploads/**"
-                ).permitAll()
+                // 🔓 STATIC FILES ONLY
+                .requestMatchers("/uploads/**").permitAll()
+
+                // 🔐 REELS NEED JWT
+                .requestMatchers("/api/reels/**").authenticated()
 
                 // 🔓 WS
-                .requestMatchers(
-                    "/ws/**",
-                    "/sockjs/**",
-                    "/topic/**",
-                    "/app/**"
-                ).permitAll()
+                .requestMatchers("/ws/**", "/sockjs/**").permitAll()
 
                 // 🔓 ACTUATOR
                 .requestMatchers("/actuator/**").permitAll()

@@ -21,14 +21,15 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
-    // ✅ PUBLIC ENDPOINTS KI JWT FILTER SKIP
+    // ✅ ONLY PUBLIC ENDPOINTS SKIP
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
 
         return path.startsWith("/auth/")
             || path.startsWith("/api/auth/")
-            || path.startsWith("/actuator");
+            || path.startsWith("/actuator")
+            || path.startsWith("/uploads/");
     }
 
     @Override
@@ -47,9 +48,7 @@ public class JwtFilter extends OncePerRequestFilter {
             if (jwtUtil.validateToken(token)) {
 
                 String username = jwtUtil.extractUsername(token);
-
-                // 🔥 IMPORTANT: role already = ROLE_ADMIN / ROLE_USER
-                String role = jwtUtil.extractRole(token);
+                String role = jwtUtil.extractRole(token); // ROLE_ADMIN / ROLE_USER
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
@@ -62,12 +61,11 @@ public class JwtFilter extends OncePerRequestFilter {
                         new WebAuthenticationDetailsSource().buildDetails(request)
                 );
 
-                SecurityContextHolder
-                        .getContext()
-                        .setAuthentication(authentication);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
 
         filterChain.doFilter(request, response);
+        System.out.println("JWT FILTER HIT: " + request.getRequestURI());
     }
 }

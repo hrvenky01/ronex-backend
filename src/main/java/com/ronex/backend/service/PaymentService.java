@@ -10,7 +10,7 @@ import com.ronex.backend.dto.CreateOrderRequest;
 import com.ronex.backend.dto.OrderResponse;
 import com.ronex.backend.repository.UserRepository;
 
-@Service
+//@Service
 public class PaymentService {
 
     @Autowired

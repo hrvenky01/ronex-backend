@@ -14,7 +14,7 @@ import com.ronex.backend.service.PaymentService;
 @RequestMapping("/api/payment")
 public class PaymentController {
 
-    @Autowired
+    //@Autowired
     private PaymentService paymentService;
 
     @PostMapping("/create-order")
