@@ -29,9 +29,9 @@ public class JwtFilter extends OncePerRequestFilter {
         return path.startsWith("/auth/")
             || path.startsWith("/api/auth/")
             || path.startsWith("/actuator")
-            || path.startsWith("/uploads/");
+            || path.startsWith("/uploads/")
+            || path.startsWith("/cloudinary/");  // 🔥 IMPORTANT FIX
     }
-
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,

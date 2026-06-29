@@ -38,31 +38,30 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-                // 🔓 AUTH
+                // 🔓 PUBLIC APIS
                 .requestMatchers(
                     "/auth/**",
-                    "/api/auth/**"
+                    "/api/auth/**",
+                    "/cloudinary/**",   // ✅ FULL OPEN (IMPORTANT FIX)
+                    "/uploads/**",
+                    "/ws/**",
+                    "/sockjs/**",
+                    "/actuator/**"
                 ).permitAll()
 
-                // 🔓 STATIC FILES ONLY
-                .requestMatchers("/uploads/**").permitAll()
-
-                // 🔐 REELS NEED JWT
-                .requestMatchers("/api/reels/**").authenticated()
-
-                // 🔓 WS
-                .requestMatchers("/ws/**", "/sockjs/**").permitAll()
-
-                // 🔓 ACTUATOR
-                .requestMatchers("/actuator/**").permitAll()
-
-                // 🔐 ROLES
+                // 🔐 ADMIN
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/user/**").hasRole("USER")
+
+                // 🔐 USER APIs
+                .requestMatchers("/api/user/**").authenticated()
+
+                // 🔐 REELS SECURE
+                .requestMatchers("/api/reels/**").authenticated()
 
                 .anyRequest().authenticated()
             )
 
+            // 🔥 JWT FILTER
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

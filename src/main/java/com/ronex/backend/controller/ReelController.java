@@ -17,7 +17,7 @@ public class ReelController {
 
     private final ReelRepository reelRepository;
 
-    // ✅ CREATE REEL (ONLY URL)
+    // ✅ CREATE REEL (ONLY URL FROM CLOUDINARY)
     @PostMapping
     public Reel createReel(
             @RequestBody ReelRequest request,
@@ -31,7 +31,7 @@ public class ReelController {
         return reelRepository.save(reel);
     }
 
-    // 🎬 GET FEED
+    // 🎬 GET REELS FEED
     @GetMapping
     public List<Reel> getReels() {
         return reelRepository.findAllByOrderByCreatedAtDesc();
