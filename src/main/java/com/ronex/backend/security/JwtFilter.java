@@ -21,18 +21,20 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
-    // ✅ ONLY PUBLIC ENDPOINTS SKIP
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
 
         return path.startsWith("/auth/")
-            || path.startsWith("/api/auth/")
-            || path.startsWith("/api/reels/")   // 🔥 ADD THIS
-            || path.startsWith("/cloudinary/")
-            || path.startsWith("/actuator/")
-            || path.startsWith("/uploads/");
+                || path.startsWith("/api/auth/")
+                || path.startsWith("/api/reels/")
+                || path.startsWith("/cloudinary/")
+                || path.startsWith("/uploads/")
+                || path.startsWith("/ws/")
+                || path.startsWith("/sockjs/")
+                || path.startsWith("/actuator/");
     }
+
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -42,31 +44,36 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String header = request.getHeader("Authorization");
 
+        System.out.println("🔥 JWT FILTER HIT: " + request.getRequestURI());
+
         if (header != null && header.startsWith("Bearer ")) {
 
             String token = header.substring(7);
 
-            if (jwtUtil.validateToken(token)) {
+            try {
+                if (jwtUtil.validateToken(token)) {
 
-                String username = jwtUtil.extractUsername(token);
-                String role = jwtUtil.extractRole(token); // ROLE_ADMIN / ROLE_USER
+                    String username = jwtUtil.extractUsername(token);
+                    String role = jwtUtil.extractRole(token);
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                username,
-                                null,
-                                List.of(new SimpleGrantedAuthority(role))
-                        );
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    username,
+                                    null,
+                                    List.of(new SimpleGrantedAuthority(role))
+                            );
 
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
+                    authentication.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            } catch (Exception e) {
+                System.out.println("❌ JWT ERROR: " + e.getMessage());
             }
         }
 
         filterChain.doFilter(request, response);
-        System.out.println("JWT FILTER HIT: " + request.getRequestURI());
     }
 }

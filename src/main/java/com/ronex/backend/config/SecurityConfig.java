@@ -23,46 +23,45 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            .csrf(csrf -> csrf.disable())
-            .cors(Customizer.withDefaults())
-            .httpBasic(basic -> basic.disable())
-            .formLogin(form -> form.disable())
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
+                .httpBasic(basic -> basic.disable())
+                .formLogin(form -> form.disable())
 
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
 
-            .exceptionHandling(ex -> ex.authenticationEntryPoint(
-                (req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)
-            ))
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                        (req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)
+                ))
 
-            .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(auth -> auth
 
-            	    // 🔓 PUBLIC APIS
-            	    .requestMatchers(
-            	        "/auth/**",
-            	        "/api/auth/**",
-            	        "/cloudinary/**",
-            	        "/uploads/**",
-            	        "/ws/**",
-            	        "/sockjs/**",
-            	        "/actuator/**"
-            	    ).permitAll()
+                        // 🔓 PUBLIC APIS
+                        .requestMatchers(
+                                "/auth/**",
+                                "/api/auth/**",
+                                "/cloudinary/**",
+                                "/uploads/**",
+                                "/ws/**",
+                                "/sockjs/**",
+                                "/actuator/**"
+                        ).permitAll()
 
-            	    // 🔐 ADMIN
-            	    .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // 🔐 ADMIN
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-            	    // 🔐 USER
-            	    .requestMatchers("/api/user/**").authenticated()
+                        // 🔐 USER
+                        .requestMatchers("/api/user/**").authenticated()
 
-            	    // 🔥 TEMP OPEN FOR TESTING (IMPORTANT)
-            	    .requestMatchers("/api/reels/**").permitAll()
+                        // 🔥 REELS (TESTING / NOW OPEN)
+                        .requestMatchers("/api/reels/**").permitAll()
 
-            	    .anyRequest().authenticated()
-            	)
+                        .anyRequest().authenticated()
+                )
 
-            // 🔥 JWT FILTER
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
