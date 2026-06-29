@@ -38,28 +38,28 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-                // 🔓 PUBLIC APIS
-                .requestMatchers(
-                    "/auth/**",
-                    "/api/auth/**",
-                    "/cloudinary/**",   // ✅ FULL OPEN (IMPORTANT FIX)
-                    "/uploads/**",
-                    "/ws/**",
-                    "/sockjs/**",
-                    "/actuator/**"
-                ).permitAll()
+            	    // 🔓 PUBLIC APIS
+            	    .requestMatchers(
+            	        "/auth/**",
+            	        "/api/auth/**",
+            	        "/cloudinary/**",
+            	        "/uploads/**",
+            	        "/ws/**",
+            	        "/sockjs/**",
+            	        "/actuator/**"
+            	    ).permitAll()
 
-                // 🔐 ADMIN
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+            	    // 🔐 ADMIN
+            	    .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                // 🔐 USER APIs
-                .requestMatchers("/api/user/**").authenticated()
+            	    // 🔐 USER
+            	    .requestMatchers("/api/user/**").authenticated()
 
-                // 🔐 REELS SECURE
-                .requestMatchers("/api/reels/**").authenticated()
+            	    // 🔥 TEMP OPEN FOR TESTING (IMPORTANT)
+            	    .requestMatchers("/api/reels/**").permitAll()
 
-                .anyRequest().authenticated()
-            )
+            	    .anyRequest().authenticated()
+            	)
 
             // 🔥 JWT FILTER
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
