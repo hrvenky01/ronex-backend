@@ -25,20 +25,20 @@ public class CloudinaryController {
         long timestamp = System.currentTimeMillis() / 1000;
 
         Map<String, Object> params = new HashMap<>();
+
+        // ⚠️ MUST include EXACT same fields as frontend sends
         params.put("timestamp", timestamp);
         params.put("folder", "ronex/reels");
 
-        String signature = cloudinary.apiSignRequest(
-                params,
-                cloudinary.config.apiSecret
-        );
+        String signature = cloudinary.apiSignRequest(params, cloudinary.config.apiSecret);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", timestamp);
-        response.put("signature", signature);
-        response.put("apiKey", cloudinary.config.apiKey);
-        response.put("cloudName", cloudinary.config.cloudName);
+        Map<String, Object> res = new HashMap<>();
+        res.put("timestamp", timestamp);
+        res.put("signature", signature);
+        res.put("apiKey", cloudinary.config.apiKey);
+        res.put("cloudName", cloudinary.config.cloudName);
+        res.put("folder", "ronex/reels"); // 🔥 ADD THIS
 
-        return response;
+        return res;
     }
 }
