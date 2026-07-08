@@ -8,6 +8,8 @@ import com.ronex.backend.service.SevenSevenSevenService;
 
 import lombok.RequiredArgsConstructor;
 
+
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/777")
 @RequiredArgsConstructor
@@ -19,6 +21,10 @@ public class SevenSevenSevenController {
     public SevenSpinResponse spin(
             @RequestHeader("X-USER-ID") Long userId,
             @RequestBody SevenSpinRequest request) {
+
+        if (request.getBet() <= 0) {
+            throw new IllegalArgumentException("Invalid bet amount");
+        }
 
         return service.spin(userId, request.getBet());
     }

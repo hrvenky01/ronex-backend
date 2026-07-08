@@ -14,8 +14,11 @@ public class SevenSpinEngine {
 
         int r = random.nextInt(100); // 0–99
 
-        if (r < 40) {
-            // 40% → NO MATCH
+        // -------------------------
+        // 50% → THREE DIFFERENT
+        // -------------------------
+        if (r < 50) {
+
             String a, b, c;
             do {
                 a = randomSymbol();
@@ -27,28 +30,36 @@ public class SevenSpinEngine {
                     List.of(a, b, c),
                     SevenResultType.NO_MATCH
             );
+        }
 
-        } else if (r < 80) {
-            // 40% → DOUBLE MATCH
-            String m = randomSymbol();
-            String o;
+        // -------------------------
+        // 32% → TWO SAME (DOUBLE)
+        // -------------------------
+        else if (r < 82) { // 50 + 32
+
+            String match = randomSymbol();
+            String other;
             do {
-                o = randomSymbol();
-            } while (o.equals(m));
+                other = randomSymbol();
+            } while (other.equals(match));
 
             List<List<String>> patterns = List.of(
-                    List.of(m, m, o),
-                    List.of(m, o, m),
-                    List.of(o, m, m)
+                    List.of(match, match, other),
+                    List.of(match, other, match),
+                    List.of(other, match, match)
             );
 
             return new SpinResult(
                     patterns.get(random.nextInt(patterns.size())),
                     SevenResultType.DOUBLE_MATCH
             );
+        }
 
-        } else if (r < 95) {
-            // 15% → TRIPLE (non-7)
+        // -------------------------
+        // 15% → THREE SAME (NON-7)
+        // -------------------------
+        else if (r < 97) { // 82 + 15
+
             String s;
             do {
                 s = randomSymbol();
@@ -58,9 +69,13 @@ public class SevenSpinEngine {
                     List.of(s, s, s),
                     SevenResultType.TRIPLE_MATCH
             );
+        }
 
-        } else {
-            // 5% → 7-7-7 JACKPOT
+        // -------------------------
+        // 3% → 7-7-7 JACKPOT
+        // -------------------------
+        else {
+
             return new SpinResult(
                     List.of("7", "7", "7"),
                     SevenResultType.JACKPOT
@@ -72,7 +87,9 @@ public class SevenSpinEngine {
         return SYMBOLS.get(random.nextInt(SYMBOLS.size()));
     }
 
-    // INNER RESULT CLASS
+    // -------------------------
+    // RESULT CLASS
+    // -------------------------
     public static class SpinResult {
         public final List<String> symbols;
         public final SevenResultType type;

@@ -23,11 +23,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+
         String path = request.getRequestURI();
 
         return path.startsWith("/auth/")
                 || path.startsWith("/api/auth/")
-                || path.startsWith("/api/reels/")
                 || path.startsWith("/cloudinary/")
                 || path.startsWith("/uploads/")
                 || path.startsWith("/ws/")
@@ -42,15 +42,16 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String header = request.getHeader("Authorization");
+        System.out.println("🔥 JWT FILTER HIT : " + request.getRequestURI());
 
-        System.out.println("🔥 JWT FILTER HIT: " + request.getRequestURI());
+        String header = request.getHeader("Authorization");
 
         if (header != null && header.startsWith("Bearer ")) {
 
             String token = header.substring(7);
 
             try {
+
                 if (jwtUtil.validateToken(token)) {
 
                     String username = jwtUtil.extractUsername(token);
@@ -64,14 +65,28 @@ public class JwtFilter extends OncePerRequestFilter {
                             );
 
                     authentication.setDetails(
-                            new WebAuthenticationDetailsSource().buildDetails(request)
+                            new WebAuthenticationDetailsSource()
+                                    .buildDetails(request)
                     );
 
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContextHolder
+                            .getContext()
+                            .setAuthentication(authentication);
+
+                    System.out.println("✅ AUTH USER : " + username);
+
                 }
+
             } catch (Exception e) {
-                System.out.println("❌ JWT ERROR: " + e.getMessage());
+
+                System.out.println("❌ JWT ERROR : " + e.getMessage());
+
             }
+
+        } else {
+
+            System.out.println("❌ NO TOKEN FOUND");
+
         }
 
         filterChain.doFilter(request, response);

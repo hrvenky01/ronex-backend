@@ -32,13 +32,15 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(
-                        (req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)
-                ))
+                .exceptionHandling(ex ->
+                        ex.authenticationEntryPoint(
+                                (req, res, e) ->
+                                        res.sendError(HttpServletResponse.SC_UNAUTHORIZED)
+                        )
+                )
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // 🔓 PUBLIC APIS
                         .requestMatchers(
                                 "/auth/**",
                                 "/api/auth/**",
@@ -49,19 +51,24 @@ public class SecurityConfig {
                                 "/actuator/**"
                         ).permitAll()
 
-                        // 🔐 ADMIN
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**")
+                        .hasRole("ADMIN")
 
-                        // 🔐 USER
-                        .requestMatchers("/api/user/**").authenticated()
+                        .requestMatchers("/api/reels/**")
+                        .authenticated()
 
-                        // 🔥 REELS (TESTING / NOW OPEN)
-                        .requestMatchers("/api/reels/**").permitAll()
+                        .requestMatchers("/api/user/**")
+                        .authenticated()
 
-                        .anyRequest().authenticated()
+                        .anyRequest()
+                        .authenticated()
+
                 )
 
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(
+                        jwtFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }

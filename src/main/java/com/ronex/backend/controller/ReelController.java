@@ -17,13 +17,18 @@ public class ReelController {
 
     private final ReelRepository reelRepository;
 
-    // ✅ CREATE REEL (ONLY URL FROM CLOUDINARY)
     @PostMapping
     public Reel createReel(
             @RequestBody ReelRequest request,
             Principal principal
     ) {
+
+        if (principal == null) {
+            throw new RuntimeException("User not authenticated");
+        }
+
         Reel reel = new Reel();
+
         reel.setVideoUrl(request.getVideoUrl());
         reel.setUserName(principal.getName());
         reel.setLikes(0L);
@@ -31,7 +36,6 @@ public class ReelController {
         return reelRepository.save(reel);
     }
 
-    // 🎬 GET REELS FEED
     @GetMapping
     public List<Reel> getReels() {
         return reelRepository.findAllByOrderByCreatedAtDesc();
