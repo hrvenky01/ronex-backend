@@ -1,14 +1,13 @@
 package com.ronex.backend.config;
 
-import java.io.ByteArrayInputStream;
-
-import org.springframework.context.annotation.Configuration;
-
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-
 import jakarta.annotation.PostConstruct;
+import org.springframework.context.annotation.Configuration;
+
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 
 @Configuration
 public class FirebaseConfig {
@@ -16,34 +15,34 @@ public class FirebaseConfig {
     @PostConstruct
     public void init() {
 
-        String privateKey = System.getenv("FIREBASE_PRIVATE_KEY");
-        String projectId  = System.getenv("FIREBASE_PROJECT_ID");
-
-        // 🔥 SAFE GUARD (IMPORTANT)
-        if (privateKey == null || projectId == null) {
-            System.out.println("⚠️ Firebase env vars not set. Firebase OTP disabled.");
-            return; // ❌ DO NOT CRASH APP
-        }
-
         try {
-            FirebaseOptions options = FirebaseOptions.builder()
-                    .setCredentials(
-                            GoogleCredentials.fromStream(
-                                    new ByteArrayInputStream(
-                                            privateKey.replace("\\n", "\n").getBytes()
-                                    )
+
+            String firebaseJson = System.getenv("FIREBASE_SERVICE_ACCOUNT");
+
+            if (firebaseJson == null || firebaseJson.isBlank()) {
+                System.out.println("⚠️ FIREBASE_SERVICE_ACCOUNT not found.");
+                return;
+            }
+
+            GoogleCredentials credentials =
+                    GoogleCredentials.fromStream(
+                            new ByteArrayInputStream(
+                                    firebaseJson.getBytes(StandardCharsets.UTF_8)
                             )
-                    )
-                    .setProjectId(projectId)
+                    );
+
+            FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(credentials)
                     .build();
 
             if (FirebaseApp.getApps().isEmpty()) {
                 FirebaseApp.initializeApp(options);
-                System.out.println("✅ Firebase initialized");
+                System.out.println("✅ Firebase initialized successfully.");
             }
 
         } catch (Exception e) {
-            throw new RuntimeException("Firebase init failed", e);
+            System.out.println("❌ Firebase initialization failed.");
+            e.printStackTrace();
         }
     }
 }
