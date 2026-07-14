@@ -42,20 +42,33 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        System.out.println("🔥 JWT FILTER HIT : " + request.getRequestURI());
+        System.out.println("\n========================================");
+        System.out.println("🔥 JWT FILTER HIT");
+        System.out.println("URI = " + request.getRequestURI());
 
         String header = request.getHeader("Authorization");
+
+        System.out.println("HEADER = " + header);
 
         if (header != null && header.startsWith("Bearer ")) {
 
             String token = header.substring(7);
 
+            System.out.println("TOKEN = " + token);
+
             try {
 
-                if (jwtUtil.validateToken(token)) {
+                boolean valid = jwtUtil.validateToken(token);
+
+                System.out.println("VALID = " + valid);
+
+                if (valid) {
 
                     String username = jwtUtil.extractUsername(token);
                     String role = jwtUtil.extractRole(token);
+
+                    System.out.println("USERNAME = " + username);
+                    System.out.println("ROLE = " + role);
 
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
@@ -73,21 +86,28 @@ public class JwtFilter extends OncePerRequestFilter {
                             .getContext()
                             .setAuthentication(authentication);
 
-                    System.out.println("✅ AUTH USER : " + username);
+                    System.out.println("✅ AUTHENTICATED");
+
+                } else {
+
+                    System.out.println("❌ INVALID TOKEN");
 
                 }
 
             } catch (Exception e) {
 
-                System.out.println("❌ JWT ERROR : " + e.getMessage());
+                System.out.println("❌ JWT ERROR");
+                e.printStackTrace();
 
             }
 
         } else {
 
-            System.out.println("❌ NO TOKEN FOUND");
+            System.out.println("❌ AUTHORIZATION HEADER MISSING");
 
         }
+
+        System.out.println("========================================\n");
 
         filterChain.doFilter(request, response);
     }

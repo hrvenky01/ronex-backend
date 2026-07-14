@@ -4,6 +4,7 @@ import com.ronex.backend.security.JwtFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -51,14 +52,19 @@ public class SecurityConfig {
                                 "/actuator/**"
                         ).permitAll()
 
-                        .requestMatchers("/api/admin/**")
-                        .hasRole("ADMIN")
+                        // Public Feed
+                        .requestMatchers(HttpMethod.GET, "/api/reels/**")
+                        .permitAll()
 
-                        .requestMatchers("/api/reels/**")
+                        // Upload / Like / Comment
+                        .requestMatchers(HttpMethod.POST, "/api/reels/**")
                         .authenticated()
 
                         .requestMatchers("/api/user/**")
                         .authenticated()
+
+                        .requestMatchers("/api/admin/**")
+                        .hasAuthority("ADMIN")
 
                         .anyRequest()
                         .authenticated()

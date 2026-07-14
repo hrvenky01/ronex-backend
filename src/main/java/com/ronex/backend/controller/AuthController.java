@@ -28,28 +28,44 @@ public class AuthController {
             @RequestBody Map<String, String> body
     ) throws Exception {
 
+        System.out.println("================================");
+        System.out.println("🔥 FIREBASE LOGIN HIT");
+        System.out.println("================================");
+
         String firebaseIdToken = body.get("firebaseToken");
+
+        if (firebaseIdToken == null || firebaseIdToken.isEmpty()) {
+            throw new RuntimeException("Firebase token is missing");
+        }
+
+        System.out.println("✅ Firebase Token Received");
 
         FirebaseToken decodedToken =
                 FirebaseAuth.getInstance().verifyIdToken(firebaseIdToken);
 
-        // ✅ CORRECT WAY (Java SDK)
-        String phone = (String) decodedToken
-                .getClaims()
-                .get("phone_number"); // +919703352669
+        System.out.println("✅ Firebase Token Verified");
+
+        String phone = (String) decodedToken.getClaims().get("phone_number");
+
+        System.out.println("PHONE = " + phone);
 
         if (phone == null) {
             throw new RuntimeException("Phone number not found in Firebase token");
         }
 
-        // normalize
         phone = phone.replace("+91", "");
 
-        // create user if needed
         authService.ensureUserExists(phone);
 
+        System.out.println("✅ User Ready");
+
         String role = authService.getUserRole(phone);
-        String jwt  = jwtUtil.generateToken(phone, role);
+
+        System.out.println("ROLE = " + role);
+
+        String jwt = jwtUtil.generateToken(phone, role);
+
+        System.out.println("✅ JWT GENERATED");
 
         return Map.of(
                 "token", jwt,
