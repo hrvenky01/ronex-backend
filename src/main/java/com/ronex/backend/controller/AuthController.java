@@ -4,6 +4,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseToken;
 import com.ronex.backend.security.JwtUtil;
 import com.ronex.backend.service.AuthService;
+import com.ronex.backend.service.StaffAuthService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,8 +22,11 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
+    @Autowired
+    private StaffAuthService staffAuthService;
+
     // ==============================
-    // 🔥 FIREBASE OTP LOGIN (FINAL)
+    // 🔥 FIREBASE OTP LOGIN
     // ==============================
     @PostMapping("/firebase-login")
     public Map<String, String> firebaseLogin(
@@ -45,12 +50,15 @@ public class AuthController {
 
         System.out.println("✅ Firebase Token Verified");
 
-        String phone = (String) decodedToken.getClaims().get("phone_number");
+        String phone =
+                (String) decodedToken.getClaims().get("phone_number");
 
         System.out.println("PHONE = " + phone);
 
         if (phone == null) {
-            throw new RuntimeException("Phone number not found in Firebase token");
+            throw new RuntimeException(
+                    "Phone number not found in Firebase token"
+            );
         }
 
         phone = phone.replace("+91", "");
@@ -74,9 +82,9 @@ public class AuthController {
         );
     }
 
-    // ======================
-    // 🔐 ADMIN LOGIN
-    // ======================
+    // ==============================
+    // 🔐 OLD ADMIN LOGIN
+    // ==============================
     @PostMapping("/admin/login")
     public Map<String, String> adminLogin(
             @RequestBody Map<String, String> req
@@ -85,7 +93,8 @@ public class AuthController {
         if ("admin".equals(req.get("username"))
                 && "admin123".equals(req.get("password"))) {
 
-            String token = jwtUtil.generateToken("admin", "ADMIN");
+            String token =
+                    jwtUtil.generateToken("admin", "ADMIN");
 
             return Map.of(
                     "token", token,
@@ -95,5 +104,27 @@ public class AuthController {
         }
 
         throw new RuntimeException("Invalid Admin Credentials");
+    }
+
+    // ==============================
+    // 🔐 RONEX ADMIN WEB STAFF LOGIN
+    // ==============================
+    @PostMapping("/staff-login")
+    public Map<String, String> staffLogin(
+            @RequestBody Map<String, String> req
+    ) {
+
+        String username = req.get("username");
+        String password = req.get("password");
+
+        if (username == null || username.isBlank()
+                || password == null || password.isBlank()) {
+
+            throw new RuntimeException(
+                    "Username and password are required"
+            );
+        }
+
+        return staffAuthService.login(username, password);
     }
 }
