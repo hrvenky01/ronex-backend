@@ -25,22 +25,43 @@ public class SecurityConfig {
 
         http
                 .csrf(csrf -> csrf.disable())
+
                 .cors(Customizer.withDefaults())
+
                 .httpBasic(basic -> basic.disable())
+
                 .formLogin(form -> form.disable())
 
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
                 )
 
-                .exceptionHandling(ex ->
-                        ex.authenticationEntryPoint(
+                .exceptionHandling(ex -> ex
+
+                        // 401 - Not authenticated
+                        .authenticationEntryPoint(
                                 (req, res, e) ->
-                                        res.sendError(HttpServletResponse.SC_UNAUTHORIZED)
+                                        res.sendError(
+                                                HttpServletResponse.SC_UNAUTHORIZED
+                                        )
+                        )
+
+                        // 403 - Authenticated but wrong role
+                        .accessDeniedHandler(
+                                (req, res, e) ->
+                                        res.sendError(
+                                                HttpServletResponse.SC_FORBIDDEN
+                                        )
                         )
                 )
 
                 .authorizeHttpRequests(auth -> auth
+
+                        // ==========================================
+                        // PUBLIC / AUTH
+                        // ==========================================
 
                         .requestMatchers(
                                 "/auth/**",
@@ -52,23 +73,54 @@ public class SecurityConfig {
                                 "/actuator/**"
                         ).permitAll()
 
-                        // Public Feed
+                        // ==========================================
+                        // PUBLIC REELS FEED
+                        // ==========================================
+
                         .requestMatchers(HttpMethod.GET, "/api/reels/**")
                         .permitAll()
 
-                        // Upload / Like / Comment
+                        // ==========================================
+                        // AUTHENTICATED REELS ACTIONS
+                        // ==========================================
+
                         .requestMatchers(HttpMethod.POST, "/api/reels/**")
                         .authenticated()
+
+                        // ==========================================
+                        // NORMAL USER APIs
+                        // ==========================================
 
                         .requestMatchers("/api/user/**")
                         .authenticated()
 
+                        // ==========================================
+                        // ADMIN APIs
+                        // ==========================================
+
                         .requestMatchers("/api/admin/**")
                         .hasAuthority("ADMIN")
 
+                        // ==========================================
+                        // MANAGER APIs
+                        // ==========================================
+
+                        .requestMatchers("/api/manager/**")
+                        .hasAuthority("MANAGER")
+
+                        // ==========================================
+                        // AGENT APIs
+                        // ==========================================
+
+                        .requestMatchers("/api/agent/**")
+                        .hasAuthority("AGENT")
+
+                        // ==========================================
+                        // EVERYTHING ELSE
+                        // ==========================================
+
                         .anyRequest()
                         .authenticated()
-
                 )
 
                 .addFilterBefore(
