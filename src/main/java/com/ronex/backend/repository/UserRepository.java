@@ -1,7 +1,7 @@
 package com.ronex.backend.repository;
 
-import com.ronex.backend.model.User;
 import com.ronex.backend.dto.UserGrowthDto;
+import com.ronex.backend.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByPhone(String phone);
+
+    long countByRole(String role);
 
     @Query("""
         SELECT new com.ronex.backend.dto.UserGrowthDto(
