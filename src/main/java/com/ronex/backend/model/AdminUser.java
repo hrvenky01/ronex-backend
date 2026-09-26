@@ -27,6 +27,9 @@ public class AdminUser {
     @Column(nullable = false)
     private String role;
 
+    @Column(name = "user_id")
+    private Long userId;
+
     @Column(nullable = false)
     private boolean active = true;
 
