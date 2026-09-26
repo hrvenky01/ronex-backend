@@ -16,11 +16,17 @@ public class GiftRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private Long userId;
 
+    @Column(nullable = false)
     private Integer amount;
 
+    @Column(length = 1000)
     private String reason;
+
+    @Column(length = 2000)
+    private String url;
 
     /**
      * PENDING
