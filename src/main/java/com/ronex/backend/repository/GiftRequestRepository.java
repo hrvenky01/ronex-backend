@@ -9,13 +9,12 @@ import java.util.List;
 public interface GiftRequestRepository
         extends JpaRepository<GiftRequest, Long> {
 
-    // Existing code compatibility
     List<GiftRequest> findByStatus(String status);
 
-    // Manager Gift Requests
-    List<GiftRequest> findByStatusOrderByCreatedAtDesc(String status);
+    List<GiftRequest> findByStatusOrderByCreatedAtDesc(
+            String status
+    );
 
-    // Manager / Admin statistics
     long countByStatus(String status);
 
     long countByStatusAndUpdatedAtGreaterThanEqualAndUpdatedAtLessThan(
@@ -24,6 +23,9 @@ public interface GiftRequestRepository
             LocalDateTime end
     );
 
-    // All requests for Manager
     List<GiftRequest> findAllByOrderByCreatedAtDesc();
+
+    List<GiftRequest> findByAgentUserIdOrderByCreatedAtDesc(
+            Long agentUserId
+    );
 }

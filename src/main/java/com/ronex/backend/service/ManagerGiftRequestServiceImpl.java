@@ -1,8 +1,12 @@
 package com.ronex.backend.service;
 
 import com.ronex.backend.dto.ManagerGiftRequestResponse;
+import com.ronex.backend.model.AdminUser;
 import com.ronex.backend.model.GiftRequest;
+import com.ronex.backend.model.User;
+import com.ronex.backend.repository.AdminUserRepository;
 import com.ronex.backend.repository.GiftRequestRepository;
+import com.ronex.backend.repository.UserRepository;
 import com.ronex.backend.wallet.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,7 +20,13 @@ public class ManagerGiftRequestServiceImpl
         implements ManagerGiftRequestService {
 
     private final GiftRequestRepository giftRequestRepository;
+
     private final WalletService walletService;
+
+    private final UserRepository userRepository;
+
+    private final AdminUserRepository adminUserRepository;
+
 
     @Override
     @Transactional(readOnly = true)
@@ -28,6 +38,7 @@ public class ManagerGiftRequestServiceImpl
                 .map(this::toResponse)
                 .toList();
     }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -47,6 +58,11 @@ public class ManagerGiftRequestServiceImpl
                 .toList();
     }
 
+
+    // =========================================================
+    // APPROVE
+    // =========================================================
+
     @Override
     @Transactional
     public ManagerGiftRequestResponse approveRequest(
@@ -54,22 +70,27 @@ public class ManagerGiftRequestServiceImpl
     ) {
 
         GiftRequest request =
-                giftRequestRepository.findById(requestId)
+                giftRequestRepository
+                        .findById(requestId)
                         .orElseThrow(() ->
                                 new RuntimeException(
                                         "Gift request not found"
                                 )
                         );
 
-        if (!"PENDING".equalsIgnoreCase(request.getStatus())) {
+        if (!"PENDING".equalsIgnoreCase(
+                request.getStatus()
+        )) {
+
             throw new RuntimeException(
                     "Only pending gift requests can be approved"
             );
         }
 
-        if (request.getUserId() == null) {
+        if (request.getRecipientUserId() == null) {
+
             throw new RuntimeException(
-                    "Gift request user is missing"
+                    "Gift request recipient is missing"
             );
         }
 
@@ -81,20 +102,34 @@ public class ManagerGiftRequestServiceImpl
             );
         }
 
-        /*
-         * IMPORTANT:
-         *
-         * Approval credits the requested coins
-         * to the user's wallet.
-         *
-         * WalletService also creates the wallet
-         * transaction record.
-         */
+        // ---------------------------------------------
+        // VERIFY RECIPIENT
+        // ---------------------------------------------
+
+        User recipient =
+                userRepository
+                        .findById(
+                                request.getRecipientUserId()
+                        )
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Recipient user not found"
+                                )
+                        );
+
+        // ---------------------------------------------
+        // CREDIT RECIPIENT
+        // ---------------------------------------------
+
         walletService.credit(
-                request.getUserId(),
+                recipient.getId(),
                 request.getAmount().longValue(),
                 "GIFT_REQUEST"
         );
+
+        // ---------------------------------------------
+        // MARK APPROVED
+        // ---------------------------------------------
 
         request.setStatus("APPROVED");
 
@@ -104,6 +139,11 @@ public class ManagerGiftRequestServiceImpl
         return toResponse(saved);
     }
 
+
+    // =========================================================
+    // REJECT
+    // =========================================================
+
     @Override
     @Transactional
     public ManagerGiftRequestResponse rejectRequest(
@@ -111,14 +151,18 @@ public class ManagerGiftRequestServiceImpl
     ) {
 
         GiftRequest request =
-                giftRequestRepository.findById(requestId)
+                giftRequestRepository
+                        .findById(requestId)
                         .orElseThrow(() ->
                                 new RuntimeException(
                                         "Gift request not found"
                                 )
                         );
 
-        if (!"PENDING".equalsIgnoreCase(request.getStatus())) {
+        if (!"PENDING".equalsIgnoreCase(
+                request.getStatus()
+        )) {
+
             throw new RuntimeException(
                     "Only pending gift requests can be rejected"
             );
@@ -132,9 +176,17 @@ public class ManagerGiftRequestServiceImpl
         return toResponse(saved);
     }
 
-    private String normalizeStatus(String status) {
+
+    // =========================================================
+    // STATUS
+    // =========================================================
+
+    private String normalizeStatus(
+            String status
+    ) {
 
         if (status == null || status.isBlank()) {
+
             throw new RuntimeException(
                     "Status is required"
             );
@@ -155,17 +207,83 @@ public class ManagerGiftRequestServiceImpl
         return normalized;
     }
 
+
+    // =========================================================
+    // RESPONSE
+    // =========================================================
+
     private ManagerGiftRequestResponse toResponse(
             GiftRequest request
     ) {
 
+        String agentUsername = null;
+
+        String recipientName = null;
+        String recipientPhone = null;
+
+
+        // ---------------------------------------------
+        // AGENT
+        // ---------------------------------------------
+
+        if (request.getAgentUserId() != null) {
+
+            AdminUser agent =
+                    adminUserRepository
+                            .findByUserId(
+                                    request.getAgentUserId()
+                            )
+                            .orElse(null);
+
+            if (agent != null) {
+
+                agentUsername =
+                        agent.getUsername();
+            }
+        }
+
+
+        // ---------------------------------------------
+        // RECIPIENT
+        // ---------------------------------------------
+
+        if (request.getRecipientUserId() != null) {
+
+            User recipient =
+                    userRepository
+                            .findById(
+                                    request.getRecipientUserId()
+                            )
+                            .orElse(null);
+
+            if (recipient != null) {
+
+                recipientName =
+                        recipient.getName();
+
+                recipientPhone =
+                        recipient.getPhone();
+            }
+        }
+
+
         return new ManagerGiftRequestResponse(
                 request.getId(),
-                request.getUserId(),
+
+                request.getAgentUserId(),
+                agentUsername,
+
+                request.getRecipientUserId(),
+                recipientName,
+                recipientPhone,
+
                 request.getAmount(),
+
                 request.getReason(),
                 request.getUrl(),
+
                 request.getStatus(),
+
                 request.getCreatedAt(),
                 request.getUpdatedAt()
         );

@@ -4,7 +4,10 @@ import java.time.LocalDateTime;
 
 public record AgentGiftRequestResponse(
         Long id,
-        Long userId,
+        Long agentUserId,
+        Long recipientUserId,
+        String recipientName,
+        String recipientPhone,
         Integer amount,
         String reason,
         String url,

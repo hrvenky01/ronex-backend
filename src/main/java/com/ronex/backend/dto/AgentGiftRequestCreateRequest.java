@@ -7,6 +7,8 @@ import lombok.Setter;
 @Setter
 public class AgentGiftRequestCreateRequest {
 
+    private Long recipientUserId;
+
     private Integer amount;
 
     private String reason;

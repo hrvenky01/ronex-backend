@@ -16,7 +16,24 @@ public class GiftRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    /**
+     * RONEX User ID of the Agent who created the request.
+     */
+    @Column(name = "agent_user_id")
+    private Long agentUserId;
+
+    /**
+     * RONEX User ID of the person who should receive the coins.
+     */
+    @Column(name = "recipient_user_id")
+    private Long recipientUserId;
+
+    /**
+     * OLD FIELD - kept temporarily for existing database compatibility.
+     *
+     * New requests should use recipientUserId.
+     */
+    @Column(name = "user_id")
     private Long userId;
 
     @Column(nullable = false)
@@ -57,6 +74,7 @@ public class GiftRequest {
 
     @PreUpdate
     protected void onUpdate() {
+
         this.updatedAt = LocalDateTime.now();
     }
 }
