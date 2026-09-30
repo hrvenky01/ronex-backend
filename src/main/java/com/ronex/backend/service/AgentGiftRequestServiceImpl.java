@@ -21,11 +21,8 @@ public class AgentGiftRequestServiceImpl
         implements AgentGiftRequestService {
 
     private final AdminUserRepository adminUserRepository;
-
     private final GiftRequestRepository giftRequestRepository;
-
     private final UserRepository userRepository;
-
 
     // =========================================================
     // GET RECIPIENT USERS
@@ -46,7 +43,6 @@ public class AgentGiftRequestServiceImpl
                 )
                 .toList();
     }
-
 
     // =========================================================
     // CREATE REQUEST
@@ -76,9 +72,7 @@ public class AgentGiftRequestServiceImpl
         // CHECK ROLE
         // ---------------------------------------------
 
-        if (!"AGENT".equalsIgnoreCase(
-                agent.getRole()
-        )) {
+        if (!"AGENT".equalsIgnoreCase(agent.getRole())) {
 
             throw new RuntimeException(
                     "Only AGENT accounts can create gift requests"
@@ -131,9 +125,7 @@ public class AgentGiftRequestServiceImpl
 
         User recipient =
                 userRepository
-                        .findById(
-                                request.getRecipientUserId()
-                        )
+                        .findById(request.getRecipientUserId())
                         .orElseThrow(() ->
                                 new RuntimeException(
                                         "Recipient user not found"
@@ -149,28 +141,6 @@ public class AgentGiftRequestServiceImpl
 
             throw new RuntimeException(
                     "Amount must be greater than zero"
-            );
-        }
-
-        // ---------------------------------------------
-        // URL
-        // ---------------------------------------------
-
-        if (request.getUrl() == null
-                || request.getUrl().isBlank()) {
-
-            throw new RuntimeException(
-                    "URL is required"
-            );
-        }
-
-        String url =
-                request.getUrl().trim();
-
-        if (!isValidUrl(url)) {
-
-            throw new RuntimeException(
-                    "Please enter a valid URL"
             );
         }
 
@@ -191,7 +161,7 @@ public class AgentGiftRequestServiceImpl
                 recipient.getId()
         );
 
-        // Keep old column populated for compatibility
+        // Old database compatibility
         giftRequest.setUserId(
                 recipient.getId()
         );
@@ -206,7 +176,7 @@ public class AgentGiftRequestServiceImpl
                         : request.getReason().trim()
         );
 
-        giftRequest.setUrl(url);
+        // URL intentionally NOT set.
 
         giftRequest.setStatus("PENDING");
 
@@ -217,7 +187,6 @@ public class AgentGiftRequestServiceImpl
 
         return toResponse(saved);
     }
-
 
     // =========================================================
     // MY REQUESTS
@@ -263,18 +232,6 @@ public class AgentGiftRequestServiceImpl
                 .toList();
     }
 
-
-    // =========================================================
-    // URL VALIDATION
-    // =========================================================
-
-    private boolean isValidUrl(String url) {
-
-        return url.startsWith("http://")
-                || url.startsWith("https://");
-    }
-
-
     // =========================================================
     // RESPONSE
     // =========================================================
@@ -306,16 +263,25 @@ public class AgentGiftRequestServiceImpl
         }
 
         return new AgentGiftRequestResponse(
+
                 request.getId(),
+
                 request.getAgentUserId(),
+
                 request.getRecipientUserId(),
+
                 recipientName,
+
                 recipientPhone,
+
                 request.getAmount(),
+
                 request.getReason(),
-                request.getUrl(),
+
                 request.getStatus(),
+
                 request.getCreatedAt(),
+
                 request.getUpdatedAt()
         );
     }

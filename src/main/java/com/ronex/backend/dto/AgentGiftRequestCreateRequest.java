@@ -12,6 +12,4 @@ public class AgentGiftRequestCreateRequest {
     private Integer amount;
 
     private String reason;
-
-    private String url;
 }

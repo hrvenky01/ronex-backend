@@ -27,6 +27,9 @@ public class ManagerGiftRequestServiceImpl
 
     private final AdminUserRepository adminUserRepository;
 
+    // =========================================================
+    // GET ALL
+    // =========================================================
 
     @Override
     @Transactional(readOnly = true)
@@ -39,6 +42,9 @@ public class ManagerGiftRequestServiceImpl
                 .toList();
     }
 
+    // =========================================================
+    // GET BY STATUS
+    // =========================================================
 
     @Override
     @Transactional(readOnly = true)
@@ -57,7 +63,6 @@ public class ManagerGiftRequestServiceImpl
                 .map(this::toResponse)
                 .toList();
     }
-
 
     // =========================================================
     // APPROVE
@@ -78,6 +83,10 @@ public class ManagerGiftRequestServiceImpl
                                 )
                         );
 
+        // ---------------------------------------------
+        // STATUS CHECK
+        // ---------------------------------------------
+
         if (!"PENDING".equalsIgnoreCase(
                 request.getStatus()
         )) {
@@ -87,12 +96,20 @@ public class ManagerGiftRequestServiceImpl
             );
         }
 
+        // ---------------------------------------------
+        // RECIPIENT CHECK
+        // ---------------------------------------------
+
         if (request.getRecipientUserId() == null) {
 
             throw new RuntimeException(
                     "Gift request recipient is missing"
             );
         }
+
+        // ---------------------------------------------
+        // AMOUNT CHECK
+        // ---------------------------------------------
 
         if (request.getAmount() == null
                 || request.getAmount() <= 0) {
@@ -139,7 +156,6 @@ public class ManagerGiftRequestServiceImpl
         return toResponse(saved);
     }
 
-
     // =========================================================
     // REJECT
     // =========================================================
@@ -176,7 +192,6 @@ public class ManagerGiftRequestServiceImpl
         return toResponse(saved);
     }
 
-
     // =========================================================
     // STATUS
     // =========================================================
@@ -207,7 +222,6 @@ public class ManagerGiftRequestServiceImpl
         return normalized;
     }
 
-
     // =========================================================
     // RESPONSE
     // =========================================================
@@ -219,8 +233,8 @@ public class ManagerGiftRequestServiceImpl
         String agentUsername = null;
 
         String recipientName = null;
-        String recipientPhone = null;
 
+        String recipientPhone = null;
 
         // ---------------------------------------------
         // AGENT
@@ -241,7 +255,6 @@ public class ManagerGiftRequestServiceImpl
                         agent.getUsername();
             }
         }
-
 
         // ---------------------------------------------
         // RECIPIENT
@@ -266,25 +279,28 @@ public class ManagerGiftRequestServiceImpl
             }
         }
 
-
         return new ManagerGiftRequestResponse(
+
                 request.getId(),
 
                 request.getAgentUserId(),
+
                 agentUsername,
 
                 request.getRecipientUserId(),
+
                 recipientName,
+
                 recipientPhone,
 
                 request.getAmount(),
 
                 request.getReason(),
-                request.getUrl(),
 
                 request.getStatus(),
 
                 request.getCreatedAt(),
+
                 request.getUpdatedAt()
         );
     }
